@@ -25,12 +25,13 @@ function secondsToHMS(seconds: number) {
 }
 
 export default function Countdown() {
-  // Inicializamos con 0 para evitar diferencias en SSR
   const [secondsLeft, setSecondsLeft] = useState(0);
   const hoursElapsedRef = useRef(0);
   const secondCounterRef = useRef(0);
+  const [floatingNumbers, setFloatingNumbers] = useState<
+    { id: number; value: number; x: number; y: number; size: number }[]
+  >([]);
 
-  // En useEffect (cliente) actualizamos con valor aleatorio
   useEffect(() => {
     setSecondsLeft(randomTimeInSeconds());
 
@@ -44,12 +45,10 @@ export default function Countdown() {
 
         setSecondsLeft((secs) => {
           let newSecs = secs - hoursElapsedRef.current * 3600;
-
           if (newSecs <= 3 * 3600) {
             newSecs = randomTimeInSeconds();
             hoursElapsedRef.current = 0;
           }
-
           return newSecs > 0 ? newSecs : 0;
         });
       }
@@ -64,6 +63,28 @@ export default function Countdown() {
     initial: { opacity: 0, y: 20 },
     animate: { opacity: 1, y: 0 },
     transition: { duration: 0.8, ease: easeOut },
+  };
+
+  const handleButtonClick = () => {
+    // Animación de botón
+    const randomNum = randomInt(0, 99);
+    const randomX = randomInt(0, window.innerWidth - 100);
+    const randomY = randomInt(0, window.innerHeight - 100);
+    const randomSize = randomInt(20, 80);
+
+    const newItem = {
+      id: Date.now(),
+      value: randomNum,
+      x: randomX,
+      y: randomY,
+      size: randomSize,
+    };
+
+    setFloatingNumbers((prev) => [...prev, newItem]);
+
+    setTimeout(() => {
+      setFloatingNumbers((prev) => prev.filter((item) => item.id !== newItem.id));
+    }, 2000);
   };
 
   return (
@@ -81,6 +102,7 @@ export default function Countdown() {
         userSelect: "none",
         padding: 16,
         overflow: "hidden",
+        position: "relative",
       }}
     >
       <motion.img
@@ -109,14 +131,7 @@ export default function Countdown() {
           color: "#d1102b",
         }}
       >
-        {/* Hora */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "flex-end",
-            gap: 6,
-          }}
-        >
+        <div style={{ display: "flex", alignItems: "flex-end", gap: 6 }}>
           <span
             style={{
               fontFamily: FONT_DIGITAL,
@@ -157,14 +172,7 @@ export default function Countdown() {
           :
         </span>
 
-        {/* Minutos */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "flex-end",
-            gap: 6,
-          }}
-        >
+        <div style={{ display: "flex", alignItems: "flex-end", gap: 6 }}>
           <span
             style={{
               fontFamily: FONT_DIGITAL,
@@ -205,14 +213,7 @@ export default function Countdown() {
           :
         </span>
 
-        {/* Segundos */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "flex-end",
-            gap: 6,
-          }}
-        >
+        <div style={{ display: "flex", alignItems: "flex-end", gap: 6 }}>
           <span
             style={{
               fontFamily: FONT_DIGITAL,
@@ -240,6 +241,41 @@ export default function Countdown() {
           </span>
         </div>
       </motion.div>
+
+      {/* Botón */}
+      <motion.img
+        src="/button.webp"
+        alt="Botón rojo"
+        className="cursor-pointer"
+        whileTap={{ scale: 0.9, rotate: -5 }}
+        onClick={handleButtonClick}
+        style={{
+          width: 150,
+          height: "auto",
+          userSelect: "none",
+        }}
+      />
+
+      {/* Números flotantes */}
+      {floatingNumbers.map((item) => (
+        <motion.span
+          key={item.id}
+          initial={{ opacity: 1, y: 0, scale: 1 }}
+          animate={{ opacity: 0, y: -100, scale: 1.5 }}
+          transition={{ duration: 2, ease: "easeOut" }}
+          style={{
+            position: "absolute",
+            left: item.x,
+            top: item.y,
+            fontFamily: FONT_DIGITAL,
+            fontSize: item.size,
+            color: "#d1102b",
+            pointerEvents: "none",
+          }}
+        >
+          {item.value}
+        </motion.span>
+      ))}
     </div>
   );
 }
